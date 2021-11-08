@@ -21,6 +21,7 @@ import (
 	"fmt"
 
 	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
@@ -56,6 +57,9 @@ type PodReconciler struct {
 //+kubebuilder:rbac:groups=core,resources=pods,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=core,resources=pods/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=core,resources=pods/finalizers,verbs=update
+//+kubebuilder:rbac:groups=flux.fluxframework.io,resources=podinfoes,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=flux.fluxframework.io,resources=podinfoes/status,verbs=get;update;patch
+//+kubebuilder:rbac:groups=flux.fluxframework.io,resources=podinfoes/finalizers,verbs=update
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
@@ -112,6 +116,29 @@ func (r *PodReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	kubeConfig := ctrl.GetConfigOrDie()
 	r.podInfoClientset = podinfoclientset.NewForConfigOrDie(kubeConfig)
 
+	pi := &fluxv1.PodInfo{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "flux/v1",
+			Kind:       "PodInfo",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "foo-pod-info",
+			Namespace: "default",
+		},
+		Spec: fluxv1.PodInfoSpec{
+			PodName:    "foo-pod",
+			NodeName:   "bar-node",
+			CpuLimit:   8,
+			CpuRequest: 8,
+		},
+		Status: fluxv1.PodInfoStatus{},
+	}
+
+	_, err := r.podInfoClientset.FluxV1().PodInfos("default").Create(context.TODO(), pi, metav1.CreateOptions{})
+	if err != nil {
+		fmt.Println("Creaion error")
+		fmt.Println(err)
+	}
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&corev1.Pod{}).
 		Complete(r)
