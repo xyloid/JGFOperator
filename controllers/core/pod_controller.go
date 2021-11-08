@@ -22,18 +22,35 @@ import (
 
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
+	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	fluxv1 "fluxframework.io/jgfoperator/apis/flux/v1"
+	// +kubebuilder:scaffold:imports
+	podinfoclientset "fluxframework.io/jgfoperator/generated/flux/clientset/versioned"
 )
+
+var (
+	newScheme = runtime.NewScheme()
+	setupLog  = ctrl.Log.WithName("setup")
+)
+
+func init() {
+	_ = clientgoscheme.AddToScheme(newScheme)
+
+	_ = fluxv1.AddToScheme(newScheme)
+	// +kubebuilder:scaffold:scheme
+}
 
 // PodReconciler reconciles a Pod object
 type PodReconciler struct {
 	client.Client
-	Scheme     *runtime.Scheme
-	podInfoMap map[string]fluxv1.PodInfo
+	Scheme           *runtime.Scheme
+	podInfoMap       map[string]fluxv1.PodInfo
+	podInfoClientset *podinfoclientset.Clientset
 }
 
 //+kubebuilder:rbac:groups=core,resources=pods,verbs=get;list;watch;create;update;patch;delete
@@ -92,6 +109,9 @@ func (r *PodReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.R
 // SetupWithManager sets up the controller with the Manager.
 func (r *PodReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	r.podInfoMap = make(map[string]fluxv1.PodInfo)
+	kubeConfig := ctrl.GetConfigOrDie()
+	r.podInfoClientset = podinfoclientset.NewForConfigOrDie(kubeConfig)
+
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&corev1.Pod{}).
 		Complete(r)

@@ -176,3 +176,13 @@ chmod +x vendor/k8s.io/code-generator/generate-groups.sh
 
 ### Generate Code
 
+- add `// +clientgen` to types.go
+- add `doc.go` and `register.go` according to reference
+
+```bash
+./hack/update-codegen.sh
+```
+
+- move `generated` folder to project root
+
+### Add `clientset` to Pod Controller
