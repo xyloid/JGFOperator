@@ -33,6 +33,32 @@ rules:
   - patch
   - update
 - apiGroups:
+  - flux
+  resources:
+  - podinfoes
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - flux
+  resources:
+  - podinfoes/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - flux
+  resources:
+  - podinfoes/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
   - flux.fluxframework.io
   resources:
   - podinfoes

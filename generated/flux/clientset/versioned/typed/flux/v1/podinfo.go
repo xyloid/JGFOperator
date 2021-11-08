@@ -68,7 +68,7 @@ func (c *podInfos) Get(ctx context.Context, name string, options metav1.GetOptio
 	result = &v1.PodInfo{}
 	err = c.client.Get().
 		Namespace(c.ns).
-		Resource("podinfos").
+		Resource("podinfoes").
 		Name(name).
 		VersionedParams(&options, scheme.ParameterCodec).
 		Do(ctx).
@@ -85,7 +85,7 @@ func (c *podInfos) List(ctx context.Context, opts metav1.ListOptions) (result *v
 	result = &v1.PodInfoList{}
 	err = c.client.Get().
 		Namespace(c.ns).
-		Resource("podinfos").
+		Resource("podinfoes").
 		VersionedParams(&opts, scheme.ParameterCodec).
 		Timeout(timeout).
 		Do(ctx).
@@ -102,7 +102,7 @@ func (c *podInfos) Watch(ctx context.Context, opts metav1.ListOptions) (watch.In
 	opts.Watch = true
 	return c.client.Get().
 		Namespace(c.ns).
-		Resource("podinfos").
+		Resource("podinfoes").
 		VersionedParams(&opts, scheme.ParameterCodec).
 		Timeout(timeout).
 		Watch(ctx)
@@ -113,7 +113,7 @@ func (c *podInfos) Create(ctx context.Context, podInfo *v1.PodInfo, opts metav1.
 	result = &v1.PodInfo{}
 	err = c.client.Post().
 		Namespace(c.ns).
-		Resource("podinfos").
+		Resource("podinfoes").
 		VersionedParams(&opts, scheme.ParameterCodec).
 		Body(podInfo).
 		Do(ctx).
@@ -126,7 +126,7 @@ func (c *podInfos) Update(ctx context.Context, podInfo *v1.PodInfo, opts metav1.
 	result = &v1.PodInfo{}
 	err = c.client.Put().
 		Namespace(c.ns).
-		Resource("podinfos").
+		Resource("podinfoes").
 		Name(podInfo.Name).
 		VersionedParams(&opts, scheme.ParameterCodec).
 		Body(podInfo).
@@ -141,7 +141,7 @@ func (c *podInfos) UpdateStatus(ctx context.Context, podInfo *v1.PodInfo, opts m
 	result = &v1.PodInfo{}
 	err = c.client.Put().
 		Namespace(c.ns).
-		Resource("podinfos").
+		Resource("podinfoes").
 		Name(podInfo.Name).
 		SubResource("status").
 		VersionedParams(&opts, scheme.ParameterCodec).
@@ -155,7 +155,7 @@ func (c *podInfos) UpdateStatus(ctx context.Context, podInfo *v1.PodInfo, opts m
 func (c *podInfos) Delete(ctx context.Context, name string, opts metav1.DeleteOptions) error {
 	return c.client.Delete().
 		Namespace(c.ns).
-		Resource("podinfos").
+		Resource("podinfoes").
 		Name(name).
 		Body(&opts).
 		Do(ctx).
@@ -170,7 +170,7 @@ func (c *podInfos) DeleteCollection(ctx context.Context, opts metav1.DeleteOptio
 	}
 	return c.client.Delete().
 		Namespace(c.ns).
-		Resource("podinfos").
+		Resource("podinfoes").
 		VersionedParams(&listOpts, scheme.ParameterCodec).
 		Timeout(timeout).
 		Body(&opts).
@@ -183,7 +183,7 @@ func (c *podInfos) Patch(ctx context.Context, name string, pt types.PatchType, d
 	result = &v1.PodInfo{}
 	err = c.client.Patch(pt).
 		Namespace(c.ns).
-		Resource("podinfos").
+		Resource("podinfoes").
 		Name(name).
 		SubResource(subresources...).
 		VersionedParams(&opts, scheme.ParameterCodec).

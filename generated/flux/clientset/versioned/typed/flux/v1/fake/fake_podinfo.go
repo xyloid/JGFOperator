@@ -35,7 +35,7 @@ type FakePodInfos struct {
 	ns   string
 }
 
-var podinfosResource = schema.GroupVersionResource{Group: "flux.fluxframework.io", Version: "v1", Resource: "podinfos"}
+var podinfosResource = schema.GroupVersionResource{Group: "flux.fluxframework.io", Version: "v1", Resource: "podinfoes"}
 
 var podinfosKind = schema.GroupVersionKind{Group: "flux.fluxframework.io", Version: "v1", Kind: "PodInfo"}
 

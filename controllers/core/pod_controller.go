@@ -57,9 +57,9 @@ type PodReconciler struct {
 //+kubebuilder:rbac:groups=core,resources=pods,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=core,resources=pods/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=core,resources=pods/finalizers,verbs=update
-//+kubebuilder:rbac:groups=flux.fluxframework.io,resources=podinfoes,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=flux.fluxframework.io,resources=podinfoes/status,verbs=get;update;patch
-//+kubebuilder:rbac:groups=flux.fluxframework.io,resources=podinfoes/finalizers,verbs=update
+//+kubebuilder:rbac:groups=flux,resources=podinfoes,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=flux,resources=podinfoes/status,verbs=get;update;patch
+//+kubebuilder:rbac:groups=flux,resources=podinfoes/finalizers,verbs=update
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
@@ -107,15 +107,6 @@ func (r *PodReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.R
 	fmt.Printf("Pod limits:%v\n", pod.Spec.Containers[0].Resources.Limits["cpu"].Format)
 	fmt.Printf("Pod requests:%v\n", pod.Spec.Containers[0].Resources.Requests)
 
-	return ctrl.Result{}, nil
-}
-
-// SetupWithManager sets up the controller with the Manager.
-func (r *PodReconciler) SetupWithManager(mgr ctrl.Manager) error {
-	r.podInfoMap = make(map[string]fluxv1.PodInfo)
-	kubeConfig := ctrl.GetConfigOrDie()
-	r.podInfoClientset = podinfoclientset.NewForConfigOrDie(kubeConfig)
-
 	pi := &fluxv1.PodInfo{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "flux/v1",
@@ -139,6 +130,16 @@ func (r *PodReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		fmt.Println("Creaion error")
 		fmt.Println(err)
 	}
+
+	return ctrl.Result{}, nil
+}
+
+// SetupWithManager sets up the controller with the Manager.
+func (r *PodReconciler) SetupWithManager(mgr ctrl.Manager) error {
+	r.podInfoMap = make(map[string]fluxv1.PodInfo)
+	kubeConfig := ctrl.GetConfigOrDie()
+	r.podInfoClientset = podinfoclientset.NewForConfigOrDie(kubeConfig)
+
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&corev1.Pod{}).
 		Complete(r)
