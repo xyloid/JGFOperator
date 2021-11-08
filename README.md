@@ -76,7 +76,7 @@ go get k8s.io/api/core/v1@v0.22.1
     OUTPUT_PKG=generated/flux, the group specified when generating the Resource is the same
     GROUP_VERSION=flux:v1 Corresponds to the group version specified when the Resource is generated
 
-### Prepare script
+### Prepare scripts
 
 `hack/tools.go`
 ```go
