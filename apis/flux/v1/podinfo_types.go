@@ -28,8 +28,14 @@ type PodInfoSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 
-	// Foo is an example field of PodInfo. Edit podinfo_types.go to remove/update
-	Foo string `json:"foo,omitempty"`
+	// The name for pod
+	PodName string `json:"podname,omitempty"`
+	// The assigned nodename of the pod
+	NodeName string `json:"nodename,omitempty"`
+	// cpu limit (roundup)
+	CpuLimit int `json:"cpu_limit,omitempty"`
+	// cpu request (roundup)
+	CpuRequest int `json:"cpu_request,omitempty"`
 }
 
 // PodInfoStatus defines the observed state of PodInfo
