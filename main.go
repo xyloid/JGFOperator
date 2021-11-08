@@ -32,6 +32,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
 	fluxv1 "fluxframework.io/jgfoperator/apis/flux/v1"
+	corecontrollers "fluxframework.io/jgfoperator/controllers/core"
 	fluxcontrollers "fluxframework.io/jgfoperator/controllers/flux"
 	//+kubebuilder:scaffold:imports
 )
@@ -83,6 +84,13 @@ func main() {
 		Scheme: mgr.GetScheme(),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "PodInfo")
+		os.Exit(1)
+	}
+	if err = (&corecontrollers.PodReconciler{
+		Client: mgr.GetClient(),
+		Scheme: mgr.GetScheme(),
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "Pod")
 		os.Exit(1)
 	}
 	//+kubebuilder:scaffold:builder
