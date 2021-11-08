@@ -161,3 +161,15 @@ else
   exit 1
 fi
 ```
+
+### Download Code-Generator
+
+```bash
+K8S_VERSION=v0.22.1
+go get k8s.io/code-generator@$K8S_VERSION
+go mod vendor
+```
+
+```bash
+chmod +x vendor/k8s.io/code-generator/generate-groups.sh
+```
