@@ -173,3 +173,6 @@ go mod vendor
 ```bash
 chmod +x vendor/k8s.io/code-generator/generate-groups.sh
 ```
+
+### Generate Code
+
