@@ -12,7 +12,7 @@ kubebuilder init --domain fluxframework.io
 kubebuilder edit --multigroup=true
 ```
 
-### Generate Resources and Manifests
+### Generate Resources and Manifests (PodInfo Controller)
 
 ```bash
 kubebuilder create api --group flux --version v1 --kind PodInfo
