@@ -50,7 +50,7 @@ func init() {
 type PodReconciler struct {
 	client.Client
 	Scheme           *runtime.Scheme
-	podInfoMap       map[string]fluxv1.PodInfo
+	podInfoMap       map[string]*fluxv1.PodInfo
 	podInfoClientset *podinfoclientset.Clientset
 }
 
@@ -83,10 +83,9 @@ func (r *PodReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.R
 		return ctrl.Result{}, err
 	}
 
-	if pod.Spec.NodeName != "" {
-		fmt.Printf("Pod node name:%s.\n", pod.Spec.NodeName)
+	if !validatePod(pod) {
+		return ctrl.Result{}, nil
 	}
-	fmt.Printf("Pod node name nominated:%s.\n", pod.Status.NominatedNodeName)
 
 	cpu_limit, ok := pod.Spec.Containers[0].Resources.Limits["cpu"]
 
@@ -100,43 +99,76 @@ func (r *PodReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.R
 		fmt.Printf("CPU request %d \n", cpu_request.Value())
 	}
 
-	fmt.Printf("Pod scheduler: %s \n", pod.Spec.SchedulerName)
-	fmt.Printf("Pod status: %s \n", &pod.Status)
-	fmt.Printf("Pod limits:%v\n", pod.Spec.Containers[0].Resources.Limits)
-	fmt.Printf("Pod limits:%v\n", pod.Spec.Containers[0].Resources.Limits["cpu"])
-	fmt.Printf("Pod limits:%v\n", pod.Spec.Containers[0].Resources.Limits["cpu"].Format)
-	fmt.Printf("Pod requests:%v\n", pod.Spec.Containers[0].Resources.Requests)
+	printPodInspection(pod)
 
-	pi := &fluxv1.PodInfo{
+	podInfo, exists := r.podInfoMap[pod.Name]
+
+	if !exists {
+		// create CR
+		newPodInfo := createPodInfo(pod.Name, pod.Spec.NodeName, int(cpu_limit.Value()), int(cpu_request.Value()))
+		_, err := r.podInfoClientset.FluxV1().PodInfos("default").Create(context.TODO(), newPodInfo, metav1.CreateOptions{})
+		if err != nil {
+			fmt.Println("Creation error")
+			fmt.Println(err)
+		}
+		r.podInfoMap[pod.Name] = newPodInfo
+
+	} else if podInfo.Spec.NodeName != pod.Spec.NodeName {
+		fmt.Println("Node assignment changed")
+		fmt.Printf("Old: %s\n", podInfo.Spec.NodeName)
+		fmt.Printf("New: %s\n", pod.Spec.NodeName)
+		// TODO: update CR
+	}
+	return ctrl.Result{}, nil
+}
+
+func createPodInfo(podname, nodename string, cpulimit, cpurequest int) *fluxv1.PodInfo {
+	return &fluxv1.PodInfo{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "flux/v1",
 			Kind:       "PodInfo",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "foo-pod-info",
+			Name:      "podinfo-" + podname,
 			Namespace: "default",
 		},
 		Spec: fluxv1.PodInfoSpec{
-			PodName:    "foo-pod",
-			NodeName:   "bar-node",
-			CpuLimit:   8,
-			CpuRequest: 8,
+			PodName:    podname,
+			NodeName:   nodename,
+			CpuLimit:   cpulimit,
+			CpuRequest: cpurequest,
 		},
 		Status: fluxv1.PodInfoStatus{},
 	}
+}
 
-	_, err := r.podInfoClientset.FluxV1().PodInfos("default").Create(context.TODO(), pi, metav1.CreateOptions{})
-	if err != nil {
-		fmt.Println("Creaion error")
-		fmt.Println(err)
+func validatePod(pod corev1.Pod) bool {
+	if pod.Spec.NodeName == "" {
+		fmt.Println("SKIP: empty nodename")
+		return false
 	}
+	if pod.Spec.SchedulerName == "scheduling-plugin" {
+		// the current name of kubeflux scheduler
+		fmt.Println("SKIP: scheduled by kubeflux")
+		return false
+	}
+	return true
+}
 
-	return ctrl.Result{}, nil
+func printPodInspection(pod corev1.Pod) {
+	fmt.Printf("# Pod Inspection\n")
+	fmt.Printf("Pod name:%s.\n", pod.Name)
+	fmt.Printf("Pod scheduler name:%s.\n", pod.Spec.SchedulerName)
+	fmt.Printf("Pod node name:%s.\n", pod.Spec.NodeName)
+	fmt.Printf("Pod node name nominated:%s.\n", pod.Status.NominatedNodeName)
+	fmt.Printf("Pod status phase: %s\n", pod.Status.Phase)
+	fmt.Printf("Pod message: %s\n", pod.Status.Message)
+	fmt.Printf("\n")
 }
 
 // SetupWithManager sets up the controller with the Manager.
 func (r *PodReconciler) SetupWithManager(mgr ctrl.Manager) error {
-	r.podInfoMap = make(map[string]fluxv1.PodInfo)
+	r.podInfoMap = make(map[string]*fluxv1.PodInfo)
 	kubeConfig := ctrl.GetConfigOrDie()
 	r.podInfoClientset = podinfoclientset.NewForConfigOrDie(kubeConfig)
 
