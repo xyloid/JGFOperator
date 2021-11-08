@@ -1,0 +1,6 @@
+apiVersion: flux.fluxframework.io/v1
+kind: PodInfo
+metadata:
+  name: podinfo-sample
+spec:
+  # TODO(user): Add fields here

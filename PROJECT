@@ -4,4 +4,14 @@ layout:
 multigroup: true
 projectName: jgfoperator
 repo: fluxframework.io/jgfoperator
+resources:
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: true
+  domain: fluxframework.io
+  group: flux
+  kind: PodInfo
+  path: fluxframework.io/jgfoperator/apis/flux/v1
+  version: v1
 version: "3"
