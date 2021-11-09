@@ -95,25 +95,6 @@ func (r *PodReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.R
 		return ctrl.Result{}, nil
 	}
 
-	cpu_limit, ok := pod.Spec.Containers[0].Resources.Limits["cpu"]
-
-	if ok {
-		fmt.Printf("CPU limit %d \n", cpu_limit.Value())
-	}
-
-	cpu_request, ok := pod.Spec.Containers[0].Resources.Limits["cpu"]
-
-	if ok {
-		fmt.Printf("CPU request %d \n", cpu_request.Value())
-	}
-
-	printPodInspection(pod)
-
-	fmt.Println("--------------")
-	fmt.Println(cpu_limit.Value())
-	fmt.Println(cpu_request.Value())
-	fmt.Println("--------------")
-
 	node, err := r.k8sclientset.CoreV1().Nodes().Get(context.Background(), pod.Spec.NodeName, metav1.GetOptions{})
 	if err != nil {
 		fmt.Println("Can not get node with name:" + pod.Spec.NodeName)
@@ -127,6 +108,26 @@ func (r *PodReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.R
 	podInfo, exists := r.podInfoMap[pod.Name]
 
 	if !exists {
+
+		cpu_limit, ok := pod.Spec.Containers[0].Resources.Limits["cpu"]
+
+		if ok {
+			fmt.Printf("CPU limit %d \n", cpu_limit.Value())
+		}
+
+		cpu_request, ok := pod.Spec.Containers[0].Resources.Limits["cpu"]
+
+		if ok {
+			fmt.Printf("CPU request %d \n", cpu_request.Value())
+		}
+
+		printPodInspection(pod)
+
+		fmt.Println("--------------")
+		fmt.Println(cpu_limit.Value())
+		fmt.Println(cpu_request.Value())
+		fmt.Println("--------------")
+
 		// create CR
 		newPodInfo := createPodInfo(pod.Name, pod.Spec.NodeName, int(cpu_limit.Value()), int(cpu_request.Value()))
 		_, err := r.podInfoClientset.FluxV1().PodInfos("default").Create(context.TODO(), newPodInfo, metav1.CreateOptions{})
@@ -141,6 +142,8 @@ func (r *PodReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.R
 		fmt.Printf("Old: %s\n", podInfo.Spec.NodeName)
 		fmt.Printf("New: %s\n", pod.Spec.NodeName)
 		// TODO: update CR
+	} else {
+		// TODO removed completed pod
 	}
 	return ctrl.Result{}, nil
 }
