@@ -1,5 +1,11 @@
 # JGFOperator
 
+## Overview
+
+1. Create CRD and Controller with `kubebuilder`
+2. Create clientset, informer, etc with `code-generator`
+3. Solve conflicts of two generators
+
 ## CRD with ClientSet
 
 
@@ -184,6 +190,7 @@ chmod +x vendor/k8s.io/code-generator/generate-groups.sh
 ```
 
 - move `generated` folder to project root
+  - don't forget to add cmd to copy `generated` folder in Dockerfile
 
 ### Add `clientset` to Pod Controller
 
