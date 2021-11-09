@@ -101,6 +101,11 @@ func (r *PodReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.R
 
 	printPodInspection(pod)
 
+	fmt.Println("--------------")
+	fmt.Println(cpu_limit.Value())
+	fmt.Println(cpu_request.Value())
+	fmt.Println("--------------")
+
 	podInfo, exists := r.podInfoMap[pod.Name]
 
 	if !exists {
