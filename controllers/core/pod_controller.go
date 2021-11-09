@@ -56,6 +56,7 @@ type PodReconciler struct {
 	Scheme           *runtime.Scheme
 	podInfoMap       map[string]*fluxv1.PodInfo
 	podInfoClientset *podinfoclientset.Clientset
+	k8sclientset     *kubernetes.Clientset
 }
 
 //+kubebuilder:rbac:groups=core,resources=pods,verbs=get;list;watch;create;update;patch;delete
@@ -113,6 +114,16 @@ func (r *PodReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.R
 	fmt.Println(cpu_request.Value())
 	fmt.Println("--------------")
 
+	node, err := r.k8sclientset.CoreV1().Nodes().Get(context.Background(), pod.Spec.NodeName, metav1.GetOptions{})
+	if err != nil {
+		fmt.Println("Can not get node with name:" + pod.Spec.NodeName)
+	} else {
+		if _, ok := node.Labels["node-role.kubernetes.io/master"]; ok {
+			fmt.Println("SKIP: Pod " + pod.Name + " is running on master node: " + pod.Spec.NodeName)
+			return ctrl.Result{}, nil
+		}
+	}
+
 	podInfo, exists := r.podInfoMap[pod.Name]
 
 	if !exists {
@@ -159,6 +170,7 @@ func validatePod(pod corev1.Pod) bool {
 		fmt.Println("SKIP: empty nodename")
 		return false
 	}
+
 	if pod.Spec.SchedulerName == "scheduling-plugin" {
 		// the current name of kubeflux scheduler
 		fmt.Println("SKIP: scheduled by kubeflux")
@@ -198,18 +210,18 @@ func (r *PodReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	}
 
 	// Kubernetes client - package kubernetes
-	clientset := kubernetes.NewForConfigOrDie(config)
+	r.k8sclientset = kubernetes.NewForConfigOrDie(config)
 
-	// Get pods -- package metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	pods, _ := clientset.CoreV1().Pods("").List(context.Background(), metav1.ListOptions{})
-	for _, p := range pods.Items {
-		fmt.Println(p.GetName())
-	}
+	// // Get pods -- package metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	// pods, _ := clientset.CoreV1().Pods("").List(context.Background(), metav1.ListOptions{})
+	// for _, p := range pods.Items {
+	// 	fmt.Println(p.GetName())
+	// }
 
-	nodes, _ := clientset.CoreV1().Nodes().List(context.Background(), metav1.ListOptions{})
-	for _, n := range nodes.Items {
-		fmt.Println(n.GetName())
-	}
+	// nodes, _ := clientset.CoreV1().Nodes().List(context.Background(), metav1.ListOptions{})
+	// for _, n := range nodes.Items {
+	// 	fmt.Println(n.GetName())
+	// }
 
 	r.podInfoMap = make(map[string]*fluxv1.PodInfo)
 	kubeConfig := ctrl.GetConfigOrDie()
