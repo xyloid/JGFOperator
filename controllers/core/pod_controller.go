@@ -19,12 +19,16 @@ package core
 import (
 	"context"
 	"fmt"
+	"os"
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/client-go/kubernetes"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
+	"k8s.io/client-go/rest"
+	"k8s.io/client-go/tools/clientcmd"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
@@ -60,6 +64,9 @@ type PodReconciler struct {
 //+kubebuilder:rbac:groups=flux,resources=podinfoes,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=flux,resources=podinfoes/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=flux,resources=podinfoes/finalizers,verbs=update
+//+kubebuilder:rbac:groups=core,resources=nodes,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=core,resources=nodes/status,verbs=get;update;patch
+//+kubebuilder:rbac:groups=core,resources=nodes/finalizers,verbs=update
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
@@ -173,6 +180,37 @@ func printPodInspection(pod corev1.Pod) {
 
 // SetupWithManager sets up the controller with the Manager.
 func (r *PodReconciler) SetupWithManager(mgr ctrl.Manager) error {
+
+	// Initilization information - package rest
+	var (
+		config *rest.Config
+		err    error
+	)
+
+	kubeconfig := os.Getenv("KUBECONFIG")
+
+	// Authentication / connection object - package tools/clientcmd
+	config, err = clientcmd.BuildConfigFromFlags("", kubeconfig)
+
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "error creating client: %v", err)
+		os.Exit(1)
+	}
+
+	// Kubernetes client - package kubernetes
+	clientset := kubernetes.NewForConfigOrDie(config)
+
+	// Get pods -- package metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	pods, _ := clientset.CoreV1().Pods("").List(context.Background(), metav1.ListOptions{})
+	for _, p := range pods.Items {
+		fmt.Println(p.GetName())
+	}
+
+	nodes, _ := clientset.CoreV1().Nodes().List(context.Background(), metav1.ListOptions{})
+	for _, n := range nodes.Items {
+		fmt.Println(n.GetName())
+	}
+
 	r.podInfoMap = make(map[string]*fluxv1.PodInfo)
 	kubeConfig := ctrl.GetConfigOrDie()
 	r.podInfoClientset = podinfoclientset.NewForConfigOrDie(kubeConfig)
