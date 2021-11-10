@@ -99,6 +99,7 @@ func (r *PodReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.R
 				fmt.Printf("Failed to delete podinfo %s\n", outdatedPodInfo.Name)
 			}
 		}
+		delete(r.podInfoMap, req.Name)
 		return ctrl.Result{}, err
 	}
 
@@ -167,6 +168,7 @@ func (r *PodReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.R
 					fmt.Printf("Failed to delete podinfo %s\n", outdatedPodInfo.Name)
 				}
 			}
+			delete(r.podInfoMap, req.Name)
 			return ctrl.Result{}, err
 		}
 	}
