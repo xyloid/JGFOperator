@@ -88,6 +88,17 @@ func (r *PodReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.R
 	var pod corev1.Pod
 	if err := r.Get(ctx, req.NamespacedName, &pod); err != nil {
 		myLog.Error(err, "unable to fetch Pod")
+
+		// clean the corresponding resources if exists
+		// This could happen since controller is synchronized on cluster level instead of each object level.
+		outdatedPodInfo, exists := r.podInfoMap[req.Name]
+		if exists {
+			fmt.Printf("Try to delete podinfo %s\n", outdatedPodInfo.Name)
+			err := r.podInfoClientset.FluxV1().PodInfos("default").Delete(context.TODO(), outdatedPodInfo.Name, metav1.DeleteOptions{})
+			if err != nil {
+				fmt.Printf("Failed to delete podinfo %s\n", outdatedPodInfo.Name)
+			}
+		}
 		return ctrl.Result{}, err
 	}
 
@@ -142,8 +153,22 @@ func (r *PodReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.R
 		fmt.Printf("Old: %s\n", podInfo.Spec.NodeName)
 		fmt.Printf("New: %s\n", pod.Spec.NodeName)
 		// TODO: update CR
+		// case 1: update nodename
+		// case 2: update amount of resources
 	} else {
-		// TODO removed completed pod
+		// remove completed pod
+		if pod.Status.Phase == corev1.PodFailed || pod.Status.Phase == corev1.PodSucceeded {
+
+			outdatedPodInfo, exists := r.podInfoMap[req.Name]
+			if exists {
+				fmt.Printf("Try to delete podinfo %s\n", outdatedPodInfo.Name)
+				err := r.podInfoClientset.FluxV1().PodInfos("default").Delete(context.TODO(), outdatedPodInfo.Name, metav1.DeleteOptions{})
+				if err != nil {
+					fmt.Printf("Failed to delete podinfo %s\n", outdatedPodInfo.Name)
+				}
+			}
+			return ctrl.Result{}, err
+		}
 	}
 	return ctrl.Result{}, nil
 }
