@@ -1,5 +1,6 @@
 # JGFOperator
 
+[reference](https://www.fatalerrors.org/a/writing-crd-by-mixing-kubeuilder-and-code-generator.html)
 ## Overview
 
 1. Create CRD and controller with `kubebuilder` [link](https://github.com/kubernetes-sigs/kubebuilder)

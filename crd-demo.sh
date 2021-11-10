@@ -8,3 +8,6 @@
 
 # Display CR
 
+# Deploy Pi job
+
+# Display CR in a loop
